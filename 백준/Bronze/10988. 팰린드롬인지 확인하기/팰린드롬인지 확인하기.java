@@ -5,22 +5,12 @@ public class Main {
     public static void main(String args[]) throws Exception {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
-        char[] word = br.readLine().toCharArray();
+        String word = br.readLine();
+        String reverse_word = new StringBuilder(word).reverse().toString();
 
-        int le=0,ri=word.length-1;
-
-        while(true){
-            if(word[le]!=word[ri]){
-                System.out.println(0);
-                return;
-            }
-
-            le++; ri--;
-
-            if(le>ri)
-                break;
-        }
-
-        System.out.println(1);
+        if(word.equals(reverse_word))
+            System.out.println(1);
+        else
+            System.out.println(0);
     }
 }
