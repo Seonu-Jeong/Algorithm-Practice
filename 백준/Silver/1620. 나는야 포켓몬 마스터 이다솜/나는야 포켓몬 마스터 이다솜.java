@@ -9,7 +9,7 @@ public class Main {
 
         int N=Integer.parseInt(st.nextToken()), M=Integer.parseInt(st.nextToken());
 
-        TreeMap<String,Integer> pocket_map = new TreeMap<>();
+        HashMap<String,Integer> pocket_map = new HashMap<>();
         String[] pocket_arr = new String[N+1];
 
         for(int i=1;i<=N;i++){
