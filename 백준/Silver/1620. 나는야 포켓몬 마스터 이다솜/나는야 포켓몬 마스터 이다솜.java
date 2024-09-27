@@ -18,14 +18,18 @@ public class Main {
             pocket_map.put(pocket_arr[i],i);
         }
 
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(System.out));
         for(int i=0;i<M;i++){
             String key = br.readLine();
-
-            if(pocket_map.get(key)==null)
-                System.out.println(pocket_arr[Integer.parseInt(key)]);
+            Integer value = pocket_map.get(key);
+            if(value==null)
+                bw.write(pocket_arr[Integer.parseInt(key)]);
             else
-                System.out.println(pocket_map.get(key));
+                bw.write(String.valueOf(value));
+
+            bw.newLine();
         }
-        
+
+        bw.flush();
     }
 }
