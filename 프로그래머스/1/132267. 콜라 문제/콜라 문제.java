@@ -9,6 +9,7 @@ class Solution {
             answer = solution(a, b, (n/a)*b) + (n/a)*b;
         else
             answer = solution(a, b, (n/a)*b+(n%a)) + (n/a)*b;
+        
         return answer;
     }
 }
