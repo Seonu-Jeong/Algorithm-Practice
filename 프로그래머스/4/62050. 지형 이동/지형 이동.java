@@ -19,7 +19,7 @@ class Solution {
         int[][] map = new int[n][n];
         for (int i = 0; i < n; i++) Arrays.fill(map[i], -1);
 
-        // 1. 영역 색칠
+        // 1. 영역 색칠 (BFS)
         int area_color = 0;
         boolean[][] visited = new boolean[n][n];
         for (int i = 0; i < n; i++) {
@@ -29,7 +29,7 @@ class Solution {
             }
         }
 
-        // 2. 영역 간 연결 비용 수집
+        // 2. 영역 간 연결 비용 수집 (반복 DFS)
         List<List<int[]>> area_adj = new ArrayList<>();
         for (int i = 0; i < area_color; i++) area_adj.add(new ArrayList<>());
 
@@ -39,7 +39,7 @@ class Solution {
                 if (visited[i][j]) continue;
 
                 Map<Integer, Integer> adj_map = new TreeMap<>();
-                connectAreaBFS(i, j, map, visited, adj_map, land);
+                connectAreaDFS(i, j, map, visited, adj_map, land);
 
                 int curArea = map[i][j];
                 for (Map.Entry<Integer, Integer> entry : adj_map.entrySet()) {
@@ -48,85 +48,98 @@ class Solution {
             }
         }
 
-        // 3. 최소 스패닝 트리 (Prim’s algorithm)
-        boolean[] areaVisited = new boolean[area_color];
-        PriorityQueue<int[]> pq = new PriorityQueue<>(Comparator.comparingInt(a -> a[0]));
-        pq.offer(new int[]{0, 0}); // 비용, 시작 영역
-
-        while (!pq.isEmpty()) {
-            int[] cur = pq.poll();
-            int cost = cur[0], area = cur[1];
-
-            if (areaVisited[area]) continue;
-            areaVisited[area] = true;
-            answer += cost;
-
-            for (int[] next : area_adj.get(area)) {
-                if (!areaVisited[next[1]]) {
-                    pq.offer(new int[]{next[0], next[1]});
-                }
-            }
-        }
+        // 3. 최소 스패닝 트리 (Prim)
+        answer = prim(area_adj);
 
         return answer;
     }
+    
+    int prim(List<List<int[]>> area_adj) {
+        int n = area_adj.size();
+        
+        boolean[] visited = new boolean[n];
+        
+        PriorityQueue<int[]> pq = new PriorityQueue<>((a,b)->a[0]-b[0]);
+        pq.add(new int[]{0,0});
+        
+        int total = 0;
+        
+        while(!pq.isEmpty()) {
+            int[] top = pq.poll();
+            
+            int w = top[0];
+            int v = top[1];
+            
+            if(visited[v]) continue;
+            
+            visited[v] = true;
+            total+=w;
+            
+            for(int[] next : area_adj.get(v)) {
+                if(visited[next[1]]) continue;
+                
+                pq.add(next);
+            }
+        }
+        
+        return total;
+    }
 
     void paintBFS(int r, int c, int color, boolean[][] visited, int[][] land, int[][] map) {
-        Queue<int[]> q = new LinkedList<>();
-        q.offer(new int[]{r, c});
-        visited[r][c] = true;
-        map[r][c] = color;
-
-        while (!q.isEmpty()) {
-            int[] cur = q.poll();
-            int y = cur[0], x = cur[1];
-
-            for (int i = 0; i < 4; i++) {
+        
+        ArrayDeque<int[]> stk = new ArrayDeque<>();
+        
+        stk.push(new int[]{r,c});
+        
+        while(!stk.isEmpty()) {
+            int[] top = stk.pop();
+            int y = top[0], x = top[1];
+            
+            visited[y][x] = true;
+            map[y][x] = color;
+            
+            for(int i=0; i<4; i++) {
                 int ny = y + dy[i];
                 int nx = x + dx[i];
-
-                if (ny < 0 || ny >= n || nx < 0 || nx >= n) continue;
-                if (visited[ny][nx]) continue;
-                if (Math.abs(land[y][x] - land[ny][nx]) > height) continue;
-
-                visited[ny][nx] = true;
-                map[ny][nx] = color;
-                q.offer(new int[]{ny, nx});
+                
+                if(ny<0||ny>=n||nx<0||nx>=n) continue;
+                if(visited[ny][nx]) continue;
+                if(Math.abs(land[y][x]-land[ny][nx])>height) continue;
+                
+                stk.push(new int[]{ny, nx});
             }
         }
     }
 
-    void connectAreaBFS(int r, int c, int[][] map, boolean[][] visited, Map<Integer, Integer> adj_map, int[][] land) {
-        Queue<int[]> q = new LinkedList<>();
-        q.offer(new int[]{r, c});
-        visited[r][c] = true;
+    void connectAreaDFS(int startR, int startC, int[][] map, boolean[][] visited, Map<Integer, Integer> adj_map, int[][] land) {
+        Stack<int[]> stack = new Stack<>();
+        stack.push(new int[]{startR, startC});
+        visited[startR][startC] = true;
+        int baseArea = map[startR][startC];
 
-        int curArea = map[r][c];
-
-        while (!q.isEmpty()) {
-            int[] cur = q.poll();
-            int y = cur[0], x = cur[1];
+        while (!stack.isEmpty()) {
+            int[] cur = stack.pop();
+            int r = cur[0], c = cur[1];
 
             for (int i = 0; i < 4; i++) {
-                int ny = y + dy[i];
-                int nx = x + dx[i];
+                int nr = r + dy[i];
+                int nc = c + dx[i];
 
-                if (ny < 0 || ny >= n || nx < 0 || nx >= n) continue;
+                if (nr < 0 || nr >= n || nc < 0 || nc >= n) continue;
 
-                int neighborArea = map[ny][nx];
+                int neighborArea = map[nr][nc];
 
-                if (neighborArea != curArea) {
-                    int diff = Math.abs(land[y][x] - land[ny][nx]);
+                if (neighborArea != baseArea) {
+                    int diff = Math.abs(land[r][c] - land[nr][nc]);
                     if (!adj_map.containsKey(neighborArea) || adj_map.get(neighborArea) > diff) {
                         adj_map.put(neighborArea, diff);
                     }
                     continue;
                 }
 
-                if (visited[ny][nx]) continue;
-
-                visited[ny][nx] = true;
-                q.offer(new int[]{ny, nx});
+                if (visited[nr][nc]) continue;
+                visited[nr][nc] = true;
+                stack.push(new int[]{nr, nc});
             }
         }
     }
