@@ -2,82 +2,69 @@ import java.util.*;
 
 class Solution {
 
-    final long INF = (long)1e18;
-    int[] sales;
-    int n;
     List<List<Integer>> adj = new ArrayList<>();
-    long[] dpSelect;
-    long[] dpNoSelc;
+    int[][] dp;
+    int[] sales;
+    boolean[] visited;
+    int[] parent;
 
     public int solution(int[] sales, int[][] links) {
         this.sales = sales;
-        this.n = sales.length;
+        int n = sales.length;
 
-        // 초기화
-        dpSelect = new long[n + 1];
-        dpNoSelc = new long[n + 1];
+        dp = new int[n + 1][2]; // dp[i][0]: i번 직원이 참석 X / dp[i][1]: 참석 O
+        visited = new boolean[n + 1];
+        parent = new int[n + 1];
+
         for (int i = 0; i <= n; i++) adj.add(new ArrayList<>());
-
-        // 트리 구성
         for (int[] link : links) {
             int a = link[0], b = link[1];
             adj.get(a).add(b);
+            parent[b] = a;
         }
 
-        // 반복 기반 후위 순회 + DP
-        postOrderDP(1);
-
-        return (int) Math.min(dpSelect[1], dpNoSelc[1]);
-    }
-
-    void postOrderDP(int root) {
-        boolean[] visited = new boolean[n + 1];
-        Deque<Integer> stk1 = new ArrayDeque<>();
-        Deque<Integer> stk2 = new ArrayDeque<>();
-
-        stk1.push(root);
-        while (!stk1.isEmpty()) {
-            int cur = stk1.pop();
-            stk2.push(cur);
-            for (int next : adj.get(cur)) {
-                if (!visited[next]) {
-                    stk1.push(next);
-                    visited[next] = true;
+        // 1. 후위 순회 순서대로 쌓기
+        List<Integer> postOrder = new ArrayList<>();
+        Deque<Integer> stack = new ArrayDeque<>();
+        boolean[] tempVisited = new boolean[n + 1];
+        stack.push(1);
+        while (!stack.isEmpty()) {
+            int node = stack.pop();
+            postOrder.add(node);
+            for (int child : adj.get(node)) {
+                if (!tempVisited[child]) {
+                    stack.push(child);
                 }
             }
+            tempVisited[node] = true;
         }
 
-        while (!stk2.isEmpty()) {
-            int cur = stk2.pop();
+        // 2. 바텀업으로 DP 계산
+        Collections.reverse(postOrder); // 후위 순회이므로 역순 처리
 
-            if (adj.get(cur).isEmpty()) {
-                // 리프 노드
-                dpSelect[cur] = sales[cur - 1];
-                dpNoSelc[cur] = 0;
-                continue;
-            }
+        for (int cur : postOrder) {
+            dp[cur][1] = sales[cur - 1]; // 자신이 참석하는 경우
 
-            long selectCost = sales[cur - 1];
-            long noSelectCost = 0;
-            boolean childSelected = false;
-            long minGap = INF;
+            boolean mustAttend = false;
+            int extraMin = Integer.MAX_VALUE;
 
             for (int child : adj.get(cur)) {
-                selectCost += Math.min(dpSelect[child], dpNoSelc[child]);
+                dp[cur][1] += Math.min(dp[child][0], dp[child][1]);
 
-                if (dpSelect[child] <= dpNoSelc[child]) {
-                    childSelected = true;
-                    noSelectCost += dpSelect[child];
+                if (dp[child][1] < dp[child][0]) {
+                    dp[cur][0] += dp[child][1];
+                    mustAttend = true;
                 } else {
-                    noSelectCost += dpNoSelc[child];
-                    minGap = Math.min(minGap, dpSelect[child] - dpNoSelc[child]);
+                    dp[cur][0] += dp[child][0];
+                    extraMin = Math.min(extraMin, dp[child][1] - dp[child][0]);
                 }
             }
 
-            if (!childSelected) noSelectCost += minGap;
-
-            dpSelect[cur] = selectCost;
-            dpNoSelc[cur] = noSelectCost;
+            if (!mustAttend && !adj.get(cur).isEmpty()) {
+                dp[cur][0] += extraMin;
+            }
         }
+
+        return Math.min(dp[1][0], dp[1][1]);
     }
 }
