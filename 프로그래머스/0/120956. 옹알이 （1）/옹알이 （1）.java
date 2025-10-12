@@ -1,63 +1,42 @@
 import java.util.*;
+
 class Solution {
+    
+    String[] words = new String[]{"aya", "ye", "woo", "ma"};
+    
     public int solution(String[] babbling) {
         int answer = 0;
         
-        String[] words = new String[]{"aya", "ye", "woo", "ma"};
-        int cnt=0;
-        for(String origin : babbling) {
-            
-            boolean[] visited = new boolean[origin.length()];
-            
-            for(String word: words) {
-                isContain(origin, word, visited);        
-            }
-            
-            boolean canSpeak = true;
-            for(int i=0; i<visited.length; i++) {
-                if(!visited[i]) {
-                    canSpeak=false;
-                    break;
-                }
-            }
-            
-            if(canSpeak)
-                cnt++;
-            
-            //System.out.println(cnt);
-        }
+        Set<String> word_set = new TreeSet<>();
+        for(String s: words) 
+            word_set.add(s);
         
-        answer = cnt;
-        
-        return answer;
-    }
-    
-    boolean isContain(String original, String word, boolean[] visited) {
-        
-        for(int i=0; i<original.length(); i++) {
-            if(visited[i]) continue;
+        for(String s: babbling) {
+            Set<String> used = new TreeSet<>();
             
-            if(original.charAt(i)!=word.charAt(0)) continue;
+            int le=0, ri=1;
             
-            
-            boolean flag=false;
-            for(int j=0; j<word.length() && i+j < original.length(); j++) {
-                if(visited[j+i]) flag=true;
-            }
-            
-            if(flag) continue;
-            
-            int end = (i+word.length())>original.length()?original.length():(i+word.length());
-            
-            if(original.substring(i,end).equals(word)) {
-                for(int j=0; j<word.length(); j++) {
-                    visited[j+i]=true;
+            while(ri<=s.length()) {
+                
+                String sub = s.substring(le, ri);
+                
+                if(word_set.contains(sub)) {
+                    if(used.contains(sub))
+                        break;
+                    else {
+                        used.add(sub);
+                        le=ri;
+                    }
                 }
                 
-                return true;
+                ri++;
             }
+            
+            if(le==s.length())
+                answer++;
+            
         }
         
-        return false;
+        return answer;
     }
 }
